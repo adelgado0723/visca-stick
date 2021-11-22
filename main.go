@@ -1,18 +1,20 @@
 package main
 
-import "github.com/splace/joysticks"
-import "log"
-import "strings"
-import "bufio"
-import "time"
-import "math"
-//import "fmt"
-import "go.bug.st/serial.v1"
-import "go.bug.st/serial.v1/enumerator"
-import "encoding/hex"
-import "os/signal"
-import "syscall"
-import "os"
+import (
+	"bufio"
+	"encoding/hex"
+	"log"
+	"math"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/splace/joysticks"
+	"go.bug.st/serial.v1"
+	"go.bug.st/serial.v1/enumerator"
+)
 
 var camPort serial.Port
 var camReader *bufio.Reader
@@ -40,7 +42,7 @@ const (
 	wbSodiumAuto
 )
 
-var loop1, loop2, loop3, loop4 uint8 = 0,0,0,0
+var loop1, loop2, loop3, loop4 uint8 = 0, 0, 0, 0
 var slowPT, oldSlowPT, slowZ, oldSlowZ bool = false, false, false, false
 
 /*
@@ -59,7 +61,7 @@ func main() {
 	signal.Notify(killSignal, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGSTOP, syscall.SIGQUIT)
 	mode := &serial.Mode{
 		BaudRate: 9600,
-		Parity: serial.NoParity,
+		Parity:   serial.NoParity,
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
 	}
@@ -71,17 +73,21 @@ func main() {
 	if len(serialPortList) == 0 {
 		log.Fatal("Can't find any serial ports", err)
 	}
-	foundOne := false
-	for _, oneSerialPort := range serialPortList {
-		log.Println("Found serial port", oneSerialPort.Name, "serial number", oneSerialPort.SerialNumber)
-		if (oneSerialPort.IsUSB && !foundOne) {
-			foundOne = true
-			camPort, err = serial.Open(oneSerialPort.Name, mode)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
+	//
+	//foundOne := false
+	//for _, oneSerialPort := range serialPortList {
+	//	log.Println("Found serial port", oneSerialPort.Name, "serial number", oneSerialPort.SerialNumber)
+	//	if (oneSerialPort.IsUSB && !foundOne) {
+	//		foundOne = true
+	//		camPort, err = serial.Open(oneSerialPort.Name, mode)
+	//		if err != nil {
+	//			log.Fatal(err)
+	//		}
+	//	}
+	//}
+
+	camPort, err = serial.Open("/dev/tty11", mode)
+
 	if nil == camPort {
 		log.Fatal("No USB serial ports found to control the camera")
 	}
@@ -92,10 +98,10 @@ func main() {
 	camScanner.Split(AnySplit("\xFF"))
 	go serialRead(camScanner, serialErrChan)
 
-	var pan, oldpan int8 = 0,0
-	var tilt, oldtilt int8 = 0,0
-	var zoom, oldzoom int8 = 0,0
-	var focus, oldfocus int8 = 0,0
+	var pan, oldpan int8 = 0, 0
+	var tilt, oldtilt int8 = 0, 0
+	var zoom, oldzoom int8 = 0, 0
+	var focus, oldfocus int8 = 0, 0
 	// try connecting to specific controller.
 	// the index is system assigned, typically it increments on each new controller added.
 	// indexes remain fixed for a given controller, if/when other controller(s) are removed.
@@ -135,7 +141,7 @@ func main() {
 	h2move := device.OnMove(2)
 	h3move := device.OnMove(3)
 	h4move := device.OnMove(4)
-        jevent := device.OSEvents
+	jevent := device.OSEvents
 
 	// start feeding OS events onto the event channels.
 	go device.ParcelOutEvents()
@@ -145,33 +151,33 @@ func main() {
 		for {
 			loop1 = loop1 + 1
 			select {
-                        case oe := <-jevent:
-                                if((0==oe.Index) && (0==oe.Type) && (0==oe.Value)) {
-                                        panic("null events")
-					controllerDisconnectChan<-true
-                                }
-			case h1 := <-h1move:
-				hpos:=h1.(joysticks.CoordsEvent)
-				//log.Println("Pos: ", hpos.X, "x, ", hpos.Y, "y")
-				if(pan != int8(math.Floor(float64(24*hpos.X)))) {
-					pan = int8(math.Floor(float64(24*hpos.X)))
+			case oe := <-jevent:
+				if (0 == oe.Index) && (0 == oe.Type) && (0 == oe.Value) {
+					panic("null events")
+					controllerDisconnectChan <- true
 				}
-				if(tilt != int8(math.Floor(float64(-20*hpos.Y)))) {
-					tilt = int8(math.Floor(float64(-20*hpos.Y)))
+			case h1 := <-h1move:
+				hpos := h1.(joysticks.CoordsEvent)
+				//log.Println("Pos: ", hpos.X, "x, ", hpos.Y, "y")
+				if pan != int8(math.Floor(float64(24*hpos.X))) {
+					pan = int8(math.Floor(float64(24 * hpos.X)))
+				}
+				if tilt != int8(math.Floor(float64(-20*hpos.Y))) {
+					tilt = int8(math.Floor(float64(-20 * hpos.Y)))
 				}
 			case h2 := <-h2move:
-				hpos:=h2.(joysticks.CoordsEvent)
-				if(focus != int8(math.Floor(float64(10*hpos.Y)))) {
-					focus = int8(math.Floor(float64(10*hpos.Y)))
+				hpos := h2.(joysticks.CoordsEvent)
+				if focus != int8(math.Floor(float64(10*hpos.Y))) {
+					focus = int8(math.Floor(float64(10 * hpos.Y)))
 				}
 			case h3 := <-h3move:
-				hpos:=h3.(joysticks.CoordsEvent)
-				if(zoom != int8(math.Floor(float64(-7*hpos.X)))) {
-					zoom = int8(math.Floor(float64(-7*hpos.X)))
+				hpos := h3.(joysticks.CoordsEvent)
+				if zoom != int8(math.Floor(float64(-7*hpos.X))) {
+					zoom = int8(math.Floor(float64(-7 * hpos.X)))
 				}
 			case h4 := <-h4move:
-				hpos:=h4.(joysticks.CoordsEvent)
-				log.Println("hat #4 moved to:", hpos.X,hpos.Y)
+				hpos := h4.(joysticks.CoordsEvent)
+				log.Println("hat #4 moved to:", hpos.X, hpos.Y)
 			case <-b1press:
 				log.Println("button #1 pressed")
 			case <-b2press:
@@ -262,30 +268,30 @@ func main() {
 			// they are single-byte to avoid race issues
 			// only write them in the joystick routine
 			// read them here and watch for changes
-//			log.Println("loop ", loop1, " ", loop2 , " ", loop3, " ", loop4)
-			time.Sleep(time.Millisecond*125)
-			if(oldpan != pan) {
+			//			log.Println("loop ", loop1, " ", loop2 , " ", loop3, " ", loop4)
+			time.Sleep(time.Millisecond * 125)
+			if oldpan != pan {
 				oldpan = pan
 				log.Println("Pan is now:", oldpan)
 				sendPanTilt(camPort, 8, speedLimit(pan, slowPT), speedLimit(tilt, slowPT)) // 8 is broadcast to all cameras
 			}
-			if(oldtilt != tilt) {
+			if oldtilt != tilt {
 				oldtilt = tilt
 				log.Println("Tilt is now:", oldtilt)
 				sendPanTilt(camPort, 8, speedLimit(pan, slowPT), speedLimit(tilt, slowPT)) // 8 is broadcast to all cameras
 			}
-			if(oldSlowPT != slowPT) {
+			if oldSlowPT != slowPT {
 				oldSlowPT = slowPT
 				log.Println("Tilt speed change")
 				sendPanTilt(camPort, 8, speedLimit(pan, slowPT), speedLimit(tilt, slowPT)) // 8 is broadcast to all cameras
 			}
-			if((oldzoom != zoom) || (oldSlowZ != slowZ)) {
+			if (oldzoom != zoom) || (oldSlowZ != slowZ) {
 				oldzoom = zoom
-				if(slowZ) {
+				if slowZ {
 					log.Println("Zooming SLOWLY")
-					if(zoom>0) {
+					if zoom > 0 {
 						sendZoom(camPort, 8, 1) // 8 is broadcast to all cameras
-					} else if(zoom<0) {
+					} else if zoom < 0 {
 						sendZoom(camPort, 8, -1) // 8 is broadcast to all cameras
 					} else {
 						sendZoom(camPort, 8, 0) // 8 is broadcast to all cameras
@@ -295,7 +301,7 @@ func main() {
 					sendZoom(camPort, 8, zoom) // 8 is broadcast to all cameras
 				}
 			}
-			if(oldfocus != focus) {
+			if oldfocus != focus {
 				oldfocus = focus
 				log.Println("Focus is now:", oldfocus)
 				sendFocus(camPort, 8, focus) // 8 is broadcast to all cameras
@@ -303,162 +309,187 @@ func main() {
 		}
 		log.Println("exiting final for loop")
 	}()
+
 	select {
-		case <-killSignal:
-		case <-serialErrChan:
-		case <-controllerDisconnectChan:
+	case <-killSignal:
+	case <-serialErrChan:
+	case <-controllerDisconnectChan:
 	}
 	log.Println("exiting!")
 }
 
 func serialRead(scanner *bufio.Scanner, serialErrChan chan bool) {
 	run := true
-	for (run) {
+	for run {
 		loop3 = loop3 + 1
 		scanner.Scan()
 		log.Println("Camera Response: ", hex.Dump([]byte(scanner.Text())))
-		if (nil != scanner.Err()) {
+		if nil != scanner.Err() {
 			run = false
 		}
 	}
 	log.Println("exiting serial read goroutine")
-	serialErrChan<-true
+	serialErrChan <- true
 }
 
 func sendZoom(port serial.Port, cam byte, zoom int8) {
-	if((zoom>0) && (zoom<=7)) {
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x07, (0x20+(byte(zoom))), 0xFF})
-	} else if((zoom<0) && (zoom>=-7)) {
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x07, (0x30+(byte(0-zoom))), 0xFF})
+	if (zoom > 0) && (zoom <= 7) {
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x07, (0x20 + (byte(zoom))), 0xFF})
+	} else if (zoom < 0) && (zoom >= -7) {
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x07, (0x30 + (byte(0 - zoom))), 0xFF})
 	} else {
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x07, 0x00, 0xFF})
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x07, 0x00, 0xFF})
 	}
 }
 
 func gotoZoom(port serial.Port, cam byte, zoom int16) {
 	// Direct zoom level command from 0x0 (wide) to 0x4000 (telephoto)
-	if((zoom>=0) && (zoom<=0x4000)) {
+	if (zoom >= 0) && (zoom <= 0x4000) {
 		p := byte(0x0F & zoom >> 12)
 		q := byte(0x0F & zoom >> 8)
 		r := byte(0x0F & zoom >> 4)
 		s := byte(0x0F & zoom)
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x47, p, q, r, s, 0xFF})
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x47, p, q, r, s, 0xFF})
 	}
 }
 
 func stopZoom(port serial.Port, cam byte) {
-	sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x07, 0x00, 0xFF})
+	sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x07, 0x00, 0xFF})
 }
 
 func gotoFocus(port serial.Port, cam byte, focus int16) {
 	// Direct focus level command, levels may not be specified, using the same as zoom
-	if((focus>=0) && (focus<=0x4000)) {
+	if (focus >= 0) && (focus <= 0x4000) {
 		p := byte(0x0F & focus >> 12)
 		q := byte(0x0F & focus >> 8)
 		r := byte(0x0F & focus >> 4)
 		s := byte(0x0F & focus)
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x48, p, q, r, s, 0xFF})
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x48, p, q, r, s, 0xFF})
 	}
 }
 
 func stopFocus(port serial.Port, cam byte) {
-	sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x08, 0x00, 0xFF})
+	sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x08, 0x00, 0xFF})
 }
 
 func onePushAutoFocus(port serial.Port, cam byte) {
-	sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x18, 0x01, 0xFF})
+	sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x18, 0x01, 0xFF})
 }
 
 func sendFocus(port serial.Port, cam byte, focus int8) {
-	if(focus>0) {
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x08, 0x02, 0xFF})
-	} else if(focus<0) {
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x08, 0x03, 0xFF})
+	if focus > 0 {
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x08, 0x02, 0xFF})
+	} else if focus < 0 {
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x08, 0x03, 0xFF})
 	} else {
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x08, 0x00, 0xFF})
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x08, 0x00, 0xFF})
 	}
 }
 
 func gotoZoomFocus(port serial.Port, cam byte, zoom int16, focus int16) {
 	// Direct zoom level command from 0x0 (wide) to 0x4000 (telephoto)
-	if((zoom>=0) && (zoom<=0x4000) && (focus>=0) && (focus<=0x4000)) {
-		p := 0x0F & byte(zoom >> 12)
-		q := 0x0F & byte(zoom >> 8)
-		r := 0x0F & byte(zoom >> 4)
+	if (zoom >= 0) && (zoom <= 0x4000) && (focus >= 0) && (focus <= 0x4000) {
+		p := 0x0F & byte(zoom>>12)
+		q := 0x0F & byte(zoom>>8)
+		r := 0x0F & byte(zoom>>4)
 		s := 0x0F & byte(zoom)
-		t := 0x0F & byte(focus >> 12)
-		u := 0x0F & byte(focus >> 8)
-		v := 0x0F & byte(focus >> 4)
+		t := 0x0F & byte(focus>>12)
+		u := 0x0F & byte(focus>>8)
+		v := 0x0F & byte(focus>>4)
 		w := 0x0F & byte(focus)
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x47, p, q, r, s, t, u, v, w, 0xFF})
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x47, p, q, r, s, t, u, v, w, 0xFF})
 	}
 }
 
 func gotoPanTilt(port serial.Port, cam byte, panspeed int16, tiltspeed int16, pan uint16, tilt uint16) {
 	// Direct pan and tilt command at specific speed
 	var m, n byte
-	if(panspeed>24) {panspeed = 0}
-	if(panspeed<(-24)) {panspeed = 0}
-	if(panspeed>=0) {m=byte(panspeed)} else {m=byte(0-panspeed)}
-	if(tiltspeed>20) {tiltspeed = 0}
-	if(tiltspeed<(-20)) {tiltspeed = 0}
-	if(tiltspeed>=0) {n=byte(tiltspeed)} else {n=byte(0-tiltspeed)}
-	p := 0x0F & byte(pan >> 12)
-	q := 0x0F & byte(pan >> 8)
-	r := 0x0F & byte(pan >> 4)
+	if panspeed > 24 {
+		panspeed = 0
+	}
+	if panspeed < (-24) {
+		panspeed = 0
+	}
+	if panspeed >= 0 {
+		m = byte(panspeed)
+	} else {
+		m = byte(0 - panspeed)
+	}
+	if tiltspeed > 20 {
+		tiltspeed = 0
+	}
+	if tiltspeed < (-20) {
+		tiltspeed = 0
+	}
+	if tiltspeed >= 0 {
+		n = byte(tiltspeed)
+	} else {
+		n = byte(0 - tiltspeed)
+	}
+	p := 0x0F & byte(pan>>12)
+	q := 0x0F & byte(pan>>8)
+	r := 0x0F & byte(pan>>4)
 	s := 0x0F & byte(pan)
-	t := 0x0F & byte(tilt >> 12)
-	u := 0x0F & byte(tilt >> 8)
-	v := 0x0F & byte(tilt >> 4)
+	t := 0x0F & byte(tilt>>12)
+	u := 0x0F & byte(tilt>>8)
+	v := 0x0F & byte(tilt>>4)
 	w := 0x0F & byte(tilt)
-	sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x02, m, n, p, q, r, s, t, u, v, w, 0xFF})
+	sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x02, m, n, p, q, r, s, t, u, v, w, 0xFF})
 }
 
 func sendPanTilt(port serial.Port, cam byte, pan int8, tilt int8) {
-	if(pan>24) {pan = 0}
-	if(pan<(-24)) {pan = 0}
-	if(tilt>20) {tilt = 0}
-	if(tilt<(-20)) {tilt = 0}
-	if((pan==0) && (tilt==0)) { // Stop
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, 0x00, 0x00, 0x03, 0x03, 0xFF})
-	} else if((pan==0) && (tilt>0)) { // Up
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, 0x00, byte(tilt), 0x03, 0x01, 0xFF})
-	} else if((pan==0) && (tilt<0)) { // Down
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, 0x00, byte(0-tilt), 0x03, 0x02, 0xFF})
-	} else if((pan<0) && (tilt==0)) { // Left
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, byte(0-pan), 0x00, 0x01, 0x03, 0xFF})
-	} else if((pan>0) && (tilt==0)) { // Right
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, byte(pan), 0x00, 0x02, 0x03, 0xFF})
-	} else if((pan<0) && (tilt>0)) { // UpLeft
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, byte(0-pan), byte(tilt), 0x01, 0x01, 0xFF})
-	} else if((pan>0) && (tilt>0)) { // UpRight
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, byte(pan), byte(tilt), 0x02, 0x01, 0xFF})
-	} else if((pan<0) && (tilt<0)) { // DownLeft
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, byte(0-pan), byte(0-tilt), 0x01, 0x02, 0xFF})
-	} else if((pan>0) && (tilt<0)) { // DownRight
-		sendVisca(port, []byte{(0x80+cam), 0x01, 0x06, 0x01, byte(pan), byte(0-tilt), 0x02, 0x02, 0xFF})
+	if pan > 24 {
+		pan = 0
+	}
+	if pan < (-24) {
+		pan = 0
+	}
+	if tilt > 20 {
+		tilt = 0
+	}
+	if tilt < (-20) {
+		tilt = 0
+	}
+	if (pan == 0) && (tilt == 0) { // Stop
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, 0x00, 0x00, 0x03, 0x03, 0xFF})
+	} else if (pan == 0) && (tilt > 0) { // Up
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, 0x00, byte(tilt), 0x03, 0x01, 0xFF})
+	} else if (pan == 0) && (tilt < 0) { // Down
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, 0x00, byte(0 - tilt), 0x03, 0x02, 0xFF})
+	} else if (pan < 0) && (tilt == 0) { // Left
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, byte(0 - pan), 0x00, 0x01, 0x03, 0xFF})
+	} else if (pan > 0) && (tilt == 0) { // Right
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, byte(pan), 0x00, 0x02, 0x03, 0xFF})
+	} else if (pan < 0) && (tilt > 0) { // UpLeft
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, byte(0 - pan), byte(tilt), 0x01, 0x01, 0xFF})
+	} else if (pan > 0) && (tilt > 0) { // UpRight
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, byte(pan), byte(tilt), 0x02, 0x01, 0xFF})
+	} else if (pan < 0) && (tilt < 0) { // DownLeft
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, byte(0 - pan), byte(0 - tilt), 0x01, 0x02, 0xFF})
+	} else if (pan > 0) && (tilt < 0) { // DownRight
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, byte(pan), byte(0 - tilt), 0x02, 0x02, 0xFF})
 	}
 }
 
 func sendWhiteBalance(port serial.Port, cam byte, wbValue WhiteBalanceT) {
 	switch wbValue {
-		case wbAuto:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x00, 0xFF})
-		case wbIndoor:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x01, 0xFF})
-		case wbOutdoor:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x02, 0xFF})
-		case wbOnePush:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x03, 0xFF})
-		case wbManual:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x05, 0xFF})
-		case wbOutdoorAuto:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x06, 0xFF})
-		case wbSodiumLampAuto:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x07, 0xFF})
-		case wbSodiumAuto:
-			sendVisca(port, []byte{(0x80+cam), 0x01, 0x04, 0x35, 0x08, 0xFF})
-		default:
+	case wbAuto:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x00, 0xFF})
+	case wbIndoor:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x01, 0xFF})
+	case wbOutdoor:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x02, 0xFF})
+	case wbOnePush:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x03, 0xFF})
+	case wbManual:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x05, 0xFF})
+	case wbOutdoorAuto:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x06, 0xFF})
+	case wbSodiumLampAuto:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x07, 0xFF})
+	case wbSodiumAuto:
+		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x04, 0x35, 0x08, 0xFF})
+	default:
 		// unknown white balance value
 	}
 }
@@ -474,7 +505,7 @@ func sendVisca(port serial.Port, message []byte) {
 
 func AnySplit(substring string) func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if atEOF && 0==len(data) {
+		if atEOF && 0 == len(data) {
 			return 0, nil, nil
 		}
 		if i := strings.Index(string(data), substring); i >= 0 {
@@ -488,13 +519,13 @@ func AnySplit(substring string) func(data []byte, atEOF bool) (advance int, toke
 }
 
 func speedLimit(speed int8, limited bool) (limitedspeed int8) {
-	if(limited) {
-		if(speed>0) {
+	if limited {
+		if speed > 0 {
 			return 1
-		} else if(speed<0) {
+		} else if speed < 0 {
 			return -1
 		}
-	return 0
+		return 0
 	}
 	return speed
 }
