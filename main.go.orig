@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"encoding/hex"
+<<<<<<< Updated upstream
+=======
 	"flag"
 	"io/ioutil"
+>>>>>>> Stashed changes
 	"log"
 	"math"
 	"os"
@@ -61,11 +64,11 @@ func main() {
 	// Process command line arguements
 	//hFlag := flag.Bool("h", false, "help message")
 
-	sFlag := flag.Bool("s", false, "Discards all output to the console")
+	vFlag := flag.Bool("v", false, "vebose output to terminal")
 
 	flag.Parse()
 
-	if *sFlag {
+	if *vFlag {
 		log.SetOutput(ioutil.Discard)
 	}
 
@@ -261,7 +264,12 @@ func main() {
 			case <-b7release:
 				log.Println("button #7 released")
 			case <-b8release:
+<<<<<<< Updated upstream
 				log.Println("button #8 released")
+=======
+				log.Print("button #8 released\n\r")
+				log.Fatal("Fail more gracefully next time")
+>>>>>>> Stashed changes
 			case <-b9release:
 				log.Println("button #9 released")
 			case <-b10release:
