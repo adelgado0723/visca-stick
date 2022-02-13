@@ -186,23 +186,9 @@ func main() {
 				log.Println("button #2 pressed")
 			case <-b3press:
 				log.Println("button #3 pressed STOPPING PAN/TILT")
-				tilt = 0
-				oldtilt = 0
-				pan = 0
-				oldpan = 0
-				sendPanTilt(camPort, activeCam, pan, tilt) // 8 is broadcast to all cameras
-				slowPT = false
-				slowZ = false
 			case <-b4press:
 				log.Println("button #4 pressed STOPPING ZOOM/FOCUS")
-				zoom = 0
-				oldzoom = 0
-				sendZoom(camPort, activeCam, zoom) // 8 is broadcast to all cameras
-				focus = 0
-				oldfocus = 0
-				sendFocus(camPort, activeCam, focus) // 8 is broadcast to all cameras
-				slowPT = false
-				slowZ = false
+
 			case <-b5press:
 				if activeCam > 1 {
 					activeCam--
@@ -282,29 +268,30 @@ func main() {
 			if oldpan != pan {
 				oldpan = pan
 				log.Println("Pan is now:", oldpan)
-				sendPanTilt(camPort, activeCam, speedLimit(pan, slowPT), speedLimit(tilt, slowPT)) // 8 is broadcast to all cameras
+				sendPanTilt(camPort, activeCam, speedLimit(pan, slowPT), speedLimit(tilt, slowPT), slowPT) // 8 is broadcast to all cameras
 			}
 			if oldtilt != tilt {
 				oldtilt = tilt
 				log.Println("Tilt is now:", oldtilt)
-				sendPanTilt(camPort, activeCam, speedLimit(pan, slowPT), speedLimit(tilt, slowPT)) // 8 is broadcast to all cameras
+				sendPanTilt(camPort, activeCam, speedLimit(pan, slowPT), speedLimit(tilt, slowPT), slowPT) // 8 is broadcast to all cameras
 			}
 			if oldSlowPT != slowPT {
 				oldSlowPT = slowPT
 				log.Println("Tilt speed change")
-				sendPanTilt(camPort, activeCam, speedLimit(pan, slowPT), speedLimit(tilt, slowPT)) // 8 is broadcast to all cameras
+				sendPanTilt(camPort, activeCam, speedLimit(pan, slowPT), speedLimit(tilt, slowPT), slowPT) // 8 is broadcast to all cameras
 			}
 			if (oldzoom != zoom) || (oldSlowZ != slowZ) {
 				oldzoom = zoom
 				if slowZ {
 					log.Println("Zooming SLOWLY")
-					if zoom > 0 {
-						sendZoom(camPort, activeCam, 1) // 8 is broadcast to all cameras
-					} else if zoom < 0 {
-						sendZoom(camPort, activeCam, -1) // 8 is broadcast to all cameras
-					} else {
-						sendZoom(camPort, activeCam, 0) // 8 is broadcast to all cameras
-					}
+					sendZoom(camPort, activeCam, 3)
+					// if zoom > 0 {
+					// 	sendZoom(camPort, activeCam, 1) // 8 is broadcast to all cameras
+					// } else if zoom < 0 {
+					// 	sendZoom(camPort, activeCam, -1) // 8 is broadcast to all cameras
+					// } else {
+					// 	sendZoom(camPort, activeCam, 0) // 8 is broadcast to all cameras
+					// }
 				} else {
 					log.Println("Zoom is now:", oldzoom)
 					sendZoom(camPort, activeCam, zoom) // 8 is broadcast to all cameras
@@ -445,19 +432,27 @@ func gotoPanTilt(port serial.Port, cam byte, panspeed int16, tiltspeed int16, pa
 	sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x02, m, n, p, q, r, s, t, u, v, w, 0xFF})
 }
 
-func sendPanTilt(port serial.Port, cam byte, pan int8, tilt int8) {
-	if pan > 24 {
-		pan = 0
+func sendPanTilt(port serial.Port, cam byte, pan int8, tilt int8, slowPT bool) {
+	// if pan > 24 {
+	// 	pan = 0
+	// }
+	// if pan < (-24) {
+	// 	pan = 0
+	// }
+	// if tilt > 20 {
+	// 	tilt = 0
+	// }
+	// if tilt < (-20) {
+	// 	tilt = 0
+	// }
+	if slowPT {
+		pan = 5
+		tilt = 4
+	} else {
+		pan = 9
+		tilt = 7
 	}
-	if pan < (-24) {
-		pan = 0
-	}
-	if tilt > 20 {
-		tilt = 0
-	}
-	if tilt < (-20) {
-		tilt = 0
-	}
+
 	if (pan == 0) && (tilt == 0) { // Stop
 		sendVisca(port, []byte{(0x80 + cam), 0x01, 0x06, 0x01, 0x00, 0x00, 0x03, 0x03, 0xFF})
 	} else if (pan == 0) && (tilt > 0) { // Up
