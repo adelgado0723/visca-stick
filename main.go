@@ -16,8 +16,7 @@ import (
 	"go.bug.st/serial.v1/enumerator"
 )
 
-//import "fmt"
-
+var verbose = true
 var camPort serial.Port
 var camReader *bufio.Reader
 var camScanner *bufio.Scanner
@@ -83,6 +82,8 @@ func main() {
 			camPort, err = serial.Open(oneSerialPort.Name, mode)
 			if err != nil {
 				log.Fatal(err)
+			} else if verbose {
+				log.Println("Discovered Cam Port Name: ", oneSerialPort.Name, "\nSerial Number: ", oneSerialPort.SerialNumber)
 			}
 		}
 	}
@@ -284,7 +285,7 @@ func main() {
 				oldzoom = zoom
 				if slowZ {
 					log.Println("Zooming SLOWLY")
-					sendZoom(camPort, activeCam, 3)
+					sendZoom(camPort, activeCam, 4)
 					// if zoom > 0 {
 					// 	sendZoom(camPort, activeCam, 1) // 8 is broadcast to all cameras
 					// } else if zoom < 0 {
@@ -318,9 +319,11 @@ func serialRead(scanner *bufio.Scanner, serialErrChan chan bool) {
 	for run {
 		loop3 = loop3 + 1
 		scanner.Scan()
-		log.Println("Camera Response: ", hex.Dump([]byte(scanner.Text())))
 		if nil != scanner.Err() {
 			run = false
+			log.Println("Error: ", scanner.Err().Error())
+		} else if verbose {
+			log.Println("Camera Response: ", hex.Dump([]byte(scanner.Text())))
 		}
 	}
 	log.Println("exiting serial read goroutine")
@@ -446,11 +449,11 @@ func sendPanTilt(port serial.Port, cam byte, pan int8, tilt int8, slowPT bool) {
 	// 	tilt = 0
 	// }
 	if slowPT {
-		pan = 5
-		tilt = 4
+		pan = 7
+		tilt = 6
 	} else {
-		pan = 9
-		tilt = 7
+		pan = 10
+		tilt = 9
 	}
 
 	if (pan == 0) && (tilt == 0) { // Stop
@@ -500,9 +503,10 @@ func sendWhiteBalance(port serial.Port, cam byte, wbValue WhiteBalanceT) {
 func sendVisca(port serial.Port, message []byte) {
 	n, err := port.Write(message)
 	log.Println(hex.Dump(message))
-	_ = n
 	if err != nil {
 		log.Fatal(err)
+	} else if verbose {
+		log.Println("Message Sent: ", message, "\nBytes Written: ", n)
 	}
 }
 
