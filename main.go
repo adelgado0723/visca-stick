@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/splace/joysticks"
+	. "github.com/splace/joysticks"
 	"go.bug.st/serial.v1"
 	"go.bug.st/serial.v1/enumerator"
 )
@@ -182,14 +182,25 @@ func main() {
 				}
 				log.Println("hat #4 moved to:", hpos.X, hpos.Y)
 			case <-b1press:
-				log.Println("button #1 pressed")
+				log.Println("button #1 pressed - Tilt Down")
+				if tilt != int8(math.Floor(float64(-20))) {
+					tilt = tilt - 1
+				}
 			case <-b2press:
-				log.Println("button #2 pressed")
+				log.Println("button #2 pressed - Pan Right")
+				if pan != int8(math.Floor(float64(24))) {
+					pan = pan + 1
+				}
 			case <-b3press:
-				log.Println("button #3 pressed STOPPING PAN/TILT")
+				log.Println("button #3 pressed - Pan Left")
+				if pan != int8(math.Floor(float64(-24))) {
+					pan = pan - 1
+				}
 			case <-b4press:
-				log.Println("button #4 pressed STOPPING ZOOM/FOCUS")
-
+				log.Println("button #4 pressed  - Tilt Up")
+				if tilt != int8(math.Floor(float64(20))) {
+					tilt = tilt + 1
+				}
 			case <-b5press:
 				if activeCam > 1 {
 					activeCam--

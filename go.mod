@@ -1,4 +1,4 @@
-module visca-stick
+module github.com/adelgado0723/visca-stick
 
 go 1.17
 
@@ -12,5 +12,5 @@ require (
 	github.com/splace/signals v0.0.0-20200924170840-2b9299cb1bca // indirect
 	github.com/splace/sounds v0.0.0-20180725230354-43b73b539164 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
-	golang.org/x/sys v0.0.0-20220204135822-1c1b9b1eba6a // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 )
