@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	. "github.com/splace/joysticks"
+	joysticks "github.com/splace/joysticks"
 	"go.bug.st/serial.v1"
 	"go.bug.st/serial.v1/enumerator"
 )
